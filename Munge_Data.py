@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
-from utils import check_for_nan_elements, remove_nan_elements, scale_predictors, write_to_json
+from utils import check_for_nan_elements, remove_nan_elements, write_to_json, scale_and_save
 
 predictor_names = ['BIAS5', 'BIAS10', 'BIAS15', 'BIAS20', 'BIAS25', 'PSY5', 'PSY10', 'PSY15', 'PSY20', 'PSY25', 'ASY1',
                    'ASY2', 'ASY3', 'ASY4', 'ASY5', 'ASY6', 'ASY7', 'ASY8', 'ASY9', 'ASY10', 'ASY15', 'ASY20', 'ASY25']
@@ -26,10 +26,10 @@ for folder_name in os.listdir('/Users/JasonKatz/Desktop/Code/Stocks/Raw_Stock_Da
         MA20 = data['Close'].shift().rolling(window=20).mean()
         MA25 = data['Close'].shift().rolling(window=25).mean()
         variables_dict['BIAS5'].extend(((data['Close'].shift() - MA5.shift())/MA5.shift())[25:-25])
-        variables_dict['BIAS10'].extend(((data['Close'].shift() - MA5.shift())/MA10.shift())[25:-25])
-        variables_dict['BIAS15'].extend(((data['Close'].shift() - MA5.shift())/MA15.shift())[25:-25])
-        variables_dict['BIAS20'].extend(((data['Close'].shift() - MA5.shift())/MA20.shift())[25:-25])
-        variables_dict['BIAS25'].extend(((data['Close'].shift() - MA5.shift())/MA25.shift())[25:-25])
+        variables_dict['BIAS10'].extend(((data['Close'].shift() - MA10.shift())/MA10.shift())[25:-25])
+        variables_dict['BIAS15'].extend(((data['Close'].shift() - MA15.shift())/MA15.shift())[25:-25])
+        variables_dict['BIAS20'].extend(((data['Close'].shift() - MA20.shift())/MA20.shift())[25:-25])
+        variables_dict['BIAS25'].extend(((data['Close'].shift() - MA25.shift())/MA25.shift())[25:-25])
         positive = pd.Series(np.where(data['Close'] >= data['Open'], 1, 0))
         variables_dict['daily'].extend(positive[25:-25])
         variables_dict['weekly'].extend((pd.Series(np.where(data['Close'].shift(-5) >= data['Open'], 1, 0)))[25:-25])
@@ -57,10 +57,10 @@ for folder_name in os.listdir('/Users/JasonKatz/Desktop/Code/Stocks/Raw_Stock_Da
 
 print('Finished Downloading Data')
 
-idx_to_remove = check_for_nan_elements(variables_dict, ['BIAS25', 'PSY25', 'ASY25'])
+idx_to_remove = check_for_nan_elements(variables_dict, ['BIAS25', 'PSY25', 'ASY25'], verbose=True)
 
-remove_nan_elements(variables_dict, idx_to_remove)
+remove_nan_elements(variables_dict, idx_to_remove, verbose=True)
 
-scale_predictors(variables_dict, predictor_names)
+scale_and_save(variables_dict, predictor_names, verbose=True)
 
-write_to_json(variables_dict)
+write_to_json(variables_dict, verbose=True)

@@ -8,6 +8,6 @@ for stock in all_stocks:
         symbol = stock['symbol']
         historical_data = data.DataReader(symbol, 'Google', '2002-08-01', '2017-08-01')
         if len(historical_data) > 252:
-            historical_data.to_csv('/Users/JasonKatz/Desktop/Raw_Stock_Data/' + symbol + '_data')
+            historical_data.to_csv('/Users/JasonKatz/Desktop/Code/Stocks/Raw_Stock_Data/' + symbol + '_data')
     except:
         pass
