@@ -30,9 +30,9 @@ for name in all_predictors + all_response:
 
 print('Beginning Download')
 
-for folder_name in os.listdir('/Users/JasonKatz/Desktop/Code/Stocks/Raw_Stock_Data')[1:]:
-    for file_name in os.listdir('/Users/JasonKatz/Desktop/Code/Stocks/Raw_Stock_Data/' + folder_name)[1:50]:
-        data = pd.read_csv('/Users/JasonKatz/Desktop/Code/Stocks/Raw_Stock_Data/' + folder_name + '/' + file_name)
+for folder_name in os.listdir('Raw_Stock_Data')[1:]:
+    for file_name in os.listdir('Raw_Stock_Data/' + folder_name)[1:50]:
+        data = pd.read_csv('Raw_Stock_Data/' + folder_name + '/' + file_name)
         MA5 = data['Close'].shift().rolling(window=5).mean()
         """"
         MA10 = data['Close'].shift().rolling(window=10).mean()
