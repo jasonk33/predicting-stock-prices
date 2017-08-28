@@ -1,4 +1,4 @@
-# Predicting Stock Price Direction using Neural Networks
+# Predicting Stock Price Direction using Deep Neural Networks
 
 Historical data from ~3000 stocks were downloaded through Google Finance
 

@@ -31,7 +31,7 @@ for name in all_predictors + all_response:
 print('Beginning Download')
 
 for folder_name in os.listdir('Raw_Stock_Data')[1:]:
-    for file_name in os.listdir('Raw_Stock_Data/' + folder_name)[1:50]:
+    for file_name in os.listdir('Raw_Stock_Data/' + folder_name)[1:25]:
         data = pd.read_csv('Raw_Stock_Data/' + folder_name + '/' + file_name)
         MA5 = data['Close'].shift().rolling(window=5).mean()
         """"
@@ -117,15 +117,24 @@ ytest_hot = np.zeros((len(ytest), 2))
 ytest_hot[np.arange(len(ytest)), ytest] = 1
 
 x = tf.placeholder(tf.float32, [None, len(predictor_names)], name='x')
-W = tf.Variable(tf.zeros([len(predictor_names), 2]), name='W')
-b = tf.Variable(tf.zeros([2]), name='b')
+W = tf.Variable(tf.random_normal([len(predictor_names), 8]), name='W')
+b = tf.Variable(tf.zeros([8]), name='b')
 y = tf.add(tf.matmul(x, W), b)
-#W2 = tf.Variable(tf.zeros([12, 2]), name='W2')
-#b2 = tf.Variable(tf.zeros([2]), name='b2')
-#y2 = tf.matmul(y, W2)
+y = tf.nn.relu(y)
+W2 = tf.Variable(tf.random_normal([8, 6]), name='W2')
+b2 = tf.Variable(tf.zeros([6]), name='b2')
+y2 = tf.matmul(y, W2) + b2
+y2 = tf.nn.relu(y2)
+W3 = tf.Variable(tf.random_normal([6, 4]), name='W3')
+b3 = tf.Variable(tf.zeros([4]), name='b3')
+y3 = tf.matmul(y2, W3) + b3
+y3 = tf.nn.relu(y3)
+W4 = tf.Variable(tf.random_normal([4, 2]), name='W4')
+b4 = tf.Variable(tf.zeros([2]), name='b4')
+y4 = tf.matmul(y3, W4) + b4
 y_ = tf.placeholder(tf.float32, [None, 2])
 
-cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y))
+cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y4))
 train_step = tf.train.GradientDescentOptimizer(.5).minimize(cross_entropy)
 sess = tf.InteractiveSession()
 tf.global_variables_initializer().run()
@@ -133,10 +142,10 @@ tf.global_variables_initializer().run()
 
 print('Starting Model Training')
 
-for _ in range(10):
+for _ in range(100):
     sess.run(train_step, feed_dict={x: xtrain, y_: ytrain_hot})
 
-correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+correct_prediction = tf.equal(tf.argmax(y4, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 
