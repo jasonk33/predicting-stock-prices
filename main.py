@@ -12,12 +12,12 @@ predictor_names = ['BIAS5', 'BIAS10', 'BIAS15', 'BIAS20', 'BIAS25', 'PSY5', 'PSY
 current_predictors = ['BIAS5', 'PSY10', 'ASY1', 'ASY2', 'ASY3', 'ASY4', 'ASY5']
 response_names = ['daily', 'weekly', 'bi_weekly', 'monthly']
 variables_dict = {}
-"""
+
 for name in predictor_names:
     variables_dict[name] = []
 for name in response_names:
     variables_dict[name] = []
-
+"""
 print('Beginning Download')
 
 for folder_name in os.listdir('Raw_Stock_Data')[1:]:

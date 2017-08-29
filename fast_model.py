@@ -116,25 +116,26 @@ ytrain_hot[np.arange(len(ytrain)), ytrain] = 1
 ytest_hot = np.zeros((len(ytest), 2))
 ytest_hot[np.arange(len(ytest)), ytest] = 1
 
-x = tf.placeholder(tf.float32, [None, len(predictor_names)], name='x')
-W = tf.Variable(tf.random_normal([len(predictor_names), 8]), name='W')
-b = tf.Variable(tf.zeros([8]), name='b')
-y = tf.add(tf.matmul(x, W), b)
-y = tf.nn.relu(y)
-W2 = tf.Variable(tf.random_normal([8, 6]), name='W2')
-b2 = tf.Variable(tf.zeros([6]), name='b2')
-y2 = tf.matmul(y, W2) + b2
-y2 = tf.nn.relu(y2)
-W3 = tf.Variable(tf.random_normal([6, 4]), name='W3')
-b3 = tf.Variable(tf.zeros([4]), name='b3')
-y3 = tf.matmul(y2, W3) + b3
-y3 = tf.nn.relu(y3)
-W4 = tf.Variable(tf.random_normal([4, 2]), name='W4')
-b4 = tf.Variable(tf.zeros([2]), name='b4')
-y4 = tf.matmul(y3, W4) + b4
-y_ = tf.placeholder(tf.float32, [None, 2])
 
-cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y4))
+def create_network(x, nodes=[], num_classes=2):
+    nodes.insert(0, x.get_shape().as_list()[1])
+    nodes.append(num_classes)
+    weights = []
+    biases = []
+    layer = x
+    for layer_num, num_nodes in enumerate(nodes[:-1]):
+        weights.append(tf.Variable(tf.random_normal([num_nodes, nodes[layer_num+1]], 0, 0.1)))
+        biases.append(tf.Variable(tf.random_normal([nodes[layer_num+1]], 0, 0.1)))
+        if layer_num > 0:
+            layer = tf.nn.relu(tf.add(tf.matmul(layer, weights[layer_num-1]), biases[layer_num-1]))
+    return tf.matmul(layer, weights[-1]) + biases[-1]
+
+x = tf.placeholder(tf.float32, [None, len(predictor_names)], name='x')
+y = tf.placeholder(tf.float32, [None, 2])
+
+output_layer = create_network(x, [100, 100, 100])
+
+cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=output_layer))
 train_step = tf.train.GradientDescentOptimizer(.5).minimize(cross_entropy)
 sess = tf.InteractiveSession()
 tf.global_variables_initializer().run()
@@ -143,11 +144,11 @@ tf.global_variables_initializer().run()
 print('Starting Model Training')
 
 for _ in range(100):
-    sess.run(train_step, feed_dict={x: xtrain, y_: ytrain_hot})
+    sess.run(train_step, feed_dict={x: xtrain, y: ytrain_hot})
 
-correct_prediction = tf.equal(tf.argmax(y4, 1), tf.argmax(y_, 1))
+correct_prediction = tf.equal(tf.argmax(output_layer, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 
-print("Model Accuracy: {}% -- Naive Model: {}%".format(sess.run(accuracy, feed_dict={x: xtest, y_: ytest_hot})*100,
+print("Model Accuracy: {}% -- Naive Model: {}%".format(sess.run(accuracy, feed_dict={x: xtest, y: ytest_hot})*100,
                                                        np.mean(ytest)*100))
