@@ -69,16 +69,21 @@ def load_from_json(predictors, response, verbose=False):
     return variables_dict
 
 
-def create_model_data(variables_dict, predictors, response):
+def create_model_data(variables_dict, predictors, response, model_type='Both'):
     predictors = np.column_stack(([variables_dict[variable_name] for variable_name in predictors]))
     print('Finished Munging Data')
     xtrain, xtest, ytrain, ytest = train_test_split(predictors, variables_dict[response])
+    print('Finished Splitting Data')
+    if model_type == 'Regression':
+        return xtrain, xtest, ytrain, ytest
     ytrain_hot = np.zeros((len(ytrain), 2))
     ytrain_hot[np.arange(len(ytrain)), ytrain] = 1
     ytest_hot = np.zeros((len(ytest), 2))
     ytest_hot[np.arange(len(ytest)), ytest] = 1
-    print('Finished Splitting Data')
-    return xtrain, xtest, ytrain_hot, ytest_hot
+    if model_type == 'Classification':
+        return xtrain, xtest, ytrain_hot, ytest_hot
+    else:
+        return xtrain, xtest, ytrain, ytest, ytrain_hot, ytest_hot
 
 
 def scale_and_save(variables_dict, predictor_names, verbose=False):
@@ -114,8 +119,8 @@ def create_network(x, nodes=[], num_classes=1):
     biases = []
     layer = x
     for layer_num, num_nodes in enumerate(nodes[:-1]):
-        weights.append(tf.Variable(tf.random_normal([num_nodes, nodes[layer_num+1]], 0, 0.1)))
-        biases.append(tf.Variable(tf.random_normal([nodes[layer_num+1]], 0, 0.1)))
+        weights.append(tf.Variable(tf.random_normal([num_nodes, nodes[layer_num+1]], 0, 0.1), name="weights_{}".format(layer_num)))
+        biases.append(tf.Variable(tf.random_normal([nodes[layer_num+1]], 0, 0.1), name="biases_{}".format(layer_num)))
         if layer_num > 0:
             layer = tf.nn.relu(tf.add(tf.matmul(layer, weights[layer_num-1]), biases[layer_num-1]))
     return tf.matmul(layer, weights[-1]) + biases[-1]

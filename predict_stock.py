@@ -33,7 +33,6 @@ scale_individual_stock(variables_dict)
 for response in responses:
     with open('saved_models/' + response + '/' + 'predictors.json', 'r') as fd:
         predictor_names = json.loads(fd.read())
-
     predictors = np.column_stack(([variables_dict[variable_name] for variable_name in predictor_names]))
     graph = tf.Graph()
     with tf.Session(graph=graph) as sess:
@@ -49,3 +48,27 @@ for response in responses:
 print("Projections for {}:".format(symbol))
 for key, value in responses.items():
     print('{} probability of price going up: {}%'.format(key, round(value[0,1]*100, 2)))
+
+graph = tf.Graph()
+with tf.Session(graph=graph) as sess:
+    weights = []
+    biases = []
+    saver = tf.train.import_meta_graph('model.meta')
+    saver.restore(sess, 'model')
+    x = graph.get_tensor_by_name("x:0")
+    for layer_num in range(100):
+        try:
+            weights.append(graph.get_tensor_by_name("weights_{}:0".format(layer_num)))
+            biases.append(graph.get_tensor_by_name("biases_{}:0".format(layer_num)))
+        except:
+            num_layers = layer_num-1
+            break
+    layer = x
+    for layer_num in range(num_layers):
+        layer = tf.nn.relu(tf.add(tf.matmul(layer, weights[layer_num]), biases[layer_num]))
+    output = tf.matmul(layer, weights[-1]) + biases[-1]
+    with open('saved_models/' + 'daily' + '/' + 'predictors.json', 'r') as fd:
+        predictor_names = json.loads(fd.read())
+    predictors = np.column_stack(([variables_dict[variable_name] for variable_name in predictor_names]))
+    prediction = sess.run(output, feed_dict={x: predictors})[0][0]
+    print(data['Close'][-1] * (prediction/100+1))

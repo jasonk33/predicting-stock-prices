@@ -32,7 +32,7 @@ for name in all_predictors + all_response:
 print('Beginning Download')
 
 for folder_name in os.listdir('Raw_Stock_Data')[1:]:
-    for file_name in os.listdir('Raw_Stock_Data/' + folder_name)[1:250]:
+    for file_name in os.listdir('Raw_Stock_Data/' + folder_name)[1:10]:
         data = pd.read_csv('Raw_Stock_Data/' + folder_name + '/' + file_name)
         MA5 = data['Close'].shift().rolling(window=5).mean()
         """"
@@ -120,7 +120,7 @@ ytest_hot[np.arange(len(ytest)), ytest] = 1
 x = tf.placeholder(tf.float32, [None, len(predictor_names)], name='x')
 y = tf.placeholder(tf.float32, [None, 2])
 
-output_layer = create_network(x, [100, 100, 100, 100], num_classes=2)
+output_layer = create_network(x, [33, 33, 33], num_classes=2)
 
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=output_layer))
 train_step = tf.train.AdamOptimizer(.01).minimize(cross_entropy)
@@ -130,7 +130,7 @@ tf.global_variables_initializer().run()
 
 print('Starting Model Training')
 
-num_epochs = 50
+num_epochs = 33
 for epoch in range(num_epochs):
     sess.run(train_step, feed_dict={x: xtrain, y: ytrain_hot})
     print('Completed Epoch {} of {}'.format(epoch + 1, num_epochs))

@@ -91,12 +91,12 @@ print('Finished Splitting Data')
 
 # Parameters
 learning_rate = 0.01
-training_epochs = 50
+training_epochs = 10
 # Network Parameters
 hidden_layer_nodes = [100, 100, 100]
 
 # tf Graph input
-x = tf.placeholder("float", [None, len(xtrain[0])])
+x = tf.placeholder("float", [None, len(xtrain[0])], name='x')
 y = tf.placeholder("float", [None])
 
 
@@ -106,6 +106,8 @@ pred = tf.transpose(create_network(x, hidden_layer_nodes, num_classes=1))
 # Define loss and optimizer
 cost = tf.reduce_mean(tf.square(pred-y))
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+
+
 
 # Launch the graph
 with tf.Session() as sess:
@@ -123,4 +125,27 @@ with tf.Session() as sess:
     predicted_vals = sess.run(pred, feed_dict={x: xtest})
     # Calculate accuracy
     accuracy = sess.run(tf.reduce_mean(tf.square(predicted_vals-y)), feed_dict={x: xtest, y: ytest})
-    print ("Accuracy:", accuracy)
+    print("Accuracy:", accuracy)
+
+    #tf.train.Saver().save(sess, 'model')
+"""
+graph = tf.Graph()
+with tf.Session(graph=graph) as sess:
+    weights = []
+    biases = []
+    saver = tf.train.import_meta_graph('model.meta')
+    saver.restore(sess, 'model')
+    x = graph.get_tensor_by_name("x:0")
+    for layer_num in range(100):
+        try:
+            weights.append(graph.get_tensor_by_name("weights_{}:0".format(layer_num)))
+            biases.append(graph.get_tensor_by_name("biases_{}:0".format(layer_num)))
+        except:
+            num_layers = layer_num-1
+            break
+    layer = x
+    for layer_num in range(num_layers):
+        layer = tf.nn.relu(tf.add(tf.matmul(layer, weights[layer_num]), biases[layer_num]))
+    output = tf.matmul(layer, weights[-1]) + biases[-1]
+    print(sess.run(output, feed_dict={x: [predictors[1]]})[0][0])
+"""
