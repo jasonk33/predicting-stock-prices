@@ -110,7 +110,8 @@ print('Finished Munging Data')
 xtrain, xtest, ytrain, ytest = train_test_split(predictors, variables_dict[response], random_state=33)
 
 print('Finished Splitting Data')
-
+ytrain = np.where(np.array(ytrain) >= 0, 1, 0)
+ytest = np.where(np.array(ytest) >= 0, 1, 0)
 ytrain_hot = np.zeros((len(ytrain), 2))
 ytrain_hot[np.arange(len(ytrain)), ytrain] = 1
 

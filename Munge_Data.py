@@ -30,11 +30,11 @@ for folder_name in os.listdir('Raw_Stock_Data')[1:]:
         variables_dict['BIAS15'].extend(((data['Close'].shift() - MA15.shift())/MA15.shift())[25:-25])
         variables_dict['BIAS20'].extend(((data['Close'].shift() - MA20.shift())/MA20.shift())[25:-25])
         variables_dict['BIAS25'].extend(((data['Close'].shift() - MA25.shift())/MA25.shift())[25:-25])
-        positive = pd.Series(np.where(data['Close'] >= data['Open'], 1, 0))
-        variables_dict['daily'].extend(positive[25:-25])
-        variables_dict['weekly'].extend((pd.Series(np.where(data['Close'].shift(-5) >= data['Open'], 1, 0)))[25:-25])
-        variables_dict['bi_weekly'].extend((pd.Series(np.where(data['Close'].shift(-10) >= data['Open'], 1, 0)))[25:-25])
-        variables_dict['monthly'].extend((pd.Series(np.where(data['Close'].shift(-22) >= data['Open'], 1, 0)))[25:-25])
+        positive = pd.Series(np.where(data['Close'] >= data['Close'].shift(), 1, 0))
+        variables_dict['daily'].extend(((data['Close'] - data['Close'].shift()) / data['Close'].shift() / .01)[25:-25])
+        variables_dict['weekly'].extend(((data['Close'] - data['Close'].shift(-5)) / data['Close'].shift(-5) / .01)[25:-25])
+        variables_dict['bi_weekly'].extend(((data['Close'] - data['Close'].shift(-10)) / data['Close'].shift(-10) / .01)[25:-25])
+        variables_dict['monthly'].extend(((data['Close'] - data['Close'].shift(-22)) / data['Close'].shift(-22) / .01)[25:-25])
         variables_dict['PSY5'].extend((positive.shift().rolling(window=5).sum())[25:-25])
         variables_dict['PSY10'].extend((positive.shift().rolling(window=10).sum())[25:-25])
         variables_dict['PSY15'].extend((positive.shift().rolling(window=15).sum())[25:-25])
@@ -55,9 +55,10 @@ for folder_name in os.listdir('Raw_Stock_Data')[1:]:
         variables_dict['ASY20'].extend((SY.shift().rolling(window=20).mean())[25:-25])
         variables_dict['ASY25'].extend((SY.shift().rolling(window=25).mean())[25:-25])
 
+
 print('Finished Downloading Data')
 
-idx_to_remove = check_for_nan_elements(variables_dict, ['BIAS25', 'PSY25', 'ASY25'], verbose=True)
+idx_to_remove = check_for_nan_elements(variables_dict, predictor_names, verbose=True)
 
 remove_nan_elements(variables_dict, idx_to_remove, verbose=True)
 

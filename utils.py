@@ -19,7 +19,7 @@ class MyEncoder(json.JSONEncoder):
 
 def check_for_nan_elements(variables_dict, variables_to_check, verbose=False):
     idx_to_remove = []
-    num_variables = len(variables_dict)
+    num_variables = len(variables_to_check)
     counter = 0
     for variable in variables_to_check:
         counter += 1
@@ -72,10 +72,12 @@ def load_from_json(predictors, response, verbose=False):
 def create_model_data(variables_dict, predictors, response, model_type='Both'):
     predictors = np.column_stack(([variables_dict[variable_name] for variable_name in predictors]))
     print('Finished Munging Data')
-    xtrain, xtest, ytrain, ytest = train_test_split(predictors, variables_dict[response])
+    xtrain, xtest, ytrain, ytest = train_test_split(predictors, variables_dict[response], random_state=33)
     print('Finished Splitting Data')
     if model_type == 'Regression':
         return xtrain, xtest, ytrain, ytest
+    ytrain = np.where(np.array(ytrain) >= 0, 1, 0)
+    ytest = np.where(np.array(ytest) >= 0, 1, 0)
     ytrain_hot = np.zeros((len(ytrain), 2))
     ytrain_hot[np.arange(len(ytrain)), ytrain] = 1
     ytest_hot = np.zeros((len(ytest), 2))

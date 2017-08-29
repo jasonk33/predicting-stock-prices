@@ -10,9 +10,9 @@ Available Predictors:
 Available Responses:
     daily, weekly, bi_weekly, monthly
 """
-num_epochs = 33
+num_epochs = 10
 
-hidden_layers = [33, 33, 33]
+hidden_layers = [25, 25]
 
 learning_rate = .01
 
@@ -26,21 +26,22 @@ for response in ['daily', 'weekly', 'bi_weekly', 'monthly']:
 
     xtrain, xtest, ytrain, ytest, ytrain_hot, ytest_hot = create_model_data(variables_dict, predictors, response,
                                                                             model_type='Both')
-    for model_type in ['Classification', 'Regression']:
-        print("Beginning {} Model".format(model_type))
+    for model_type in ['Regression', 'Classification']:
+        print('Beginning {} Model for {} Predictions'.format(model_type, response))
         print('Setting up TensorBoard')
         x = tf.placeholder(tf.float32, [None, len(predictors)], name='x')
-        y = tf.placeholder(tf.float32, [None, 2], name='y')
         if model_type == 'Classification':
+            y = tf.placeholder(tf.float32, [None, 2], name='y')
             output_layer = create_network(x, hidden_layers, num_classes=2)
             cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=output_layer))
         else:
+            y = tf.placeholder(tf.float32, name='y')
             output_layer = tf.transpose(create_network(x, hidden_layers, num_classes=1))
             cost = tf.reduce_mean(tf.square(output_layer-y))
         optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 
-        with tf.InteractiveSession() as sess:
-            tf.global_variables_initializer().run()
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
             print('Starting Model Training')
             for epoch in range(num_epochs):
                 if model_type == 'Classification':
@@ -53,7 +54,7 @@ for response in ['daily', 'weekly', 'bi_weekly', 'monthly']:
                 correct_prediction = tf.equal(tf.argmax(output_layer, 1), tf.argmax(y, 1))
                 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
                 model_accuracy = sess.run(accuracy, feed_dict={x: xtest, y: ytest_hot}) * 100
-                naive_accuracy = ytest[:, 1].mean() * 100
+                naive_accuracy = ytest_hot[:, 1].mean() * 100
                 print("Model Accuracy: {}% -- Naive Model: {}%".format(model_accuracy, naive_accuracy))
                 with open('saved_models/' + response + '/' + model_type + '/accuracy.json', 'w') as fd:
                     fd.write(json.dumps({'Model': model_accuracy, 'Naive': naive_accuracy}, indent=4))

@@ -29,19 +29,31 @@ for days in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25]:
 responses = {'daily': None, 'weekly': None, 'bi_weekly': None, 'monthly': None}
 
 scale_individual_stock(variables_dict)
-
+responses = {'monthly': None}
 for response in responses:
     with open('saved_models/' + response + '/' + 'predictors.json', 'r') as fd:
         predictor_names = json.loads(fd.read())
     predictors = np.column_stack(([variables_dict[variable_name] for variable_name in predictor_names]))
     graph = tf.Graph()
     with tf.Session(graph=graph) as sess:
-        saver = tf.train.import_meta_graph('saved_models/' + response + '/model.meta')
-        saver.restore(sess, 'saved_models/' + response + '/model')
+        saver = tf.train.import_meta_graph('saved_models/' + response + '/Classification/model.meta')
+        saver.restore(sess, 'saved_models/' + response + '/Classification/model')
         x = graph.get_tensor_by_name("x:0")
-        weights = graph.get_tensor_by_name("weights:0")
-        biases = graph.get_tensor_by_name("biases:0")
-        output = tf.add(tf.matmul(x, weights), biases)
+        weights = []
+        biases = []
+        for layer_num in range(100):
+            try:
+                weights.append(graph.get_tensor_by_name("weights_{}:0".format(layer_num)))
+                biases.append(graph.get_tensor_by_name("biases_{}:0".format(layer_num)))
+            except:
+                num_layers = layer_num - 1
+                break
+        layer = x
+        for layer_num in range(num_layers):
+            print(layer.shape)
+            print(weights[layer_num].shape)
+            layer = tf.nn.relu(tf.add(tf.matmul(layer, weights[layer_num]), biases[layer_num]))
+        output = tf.matmul(layer, weights[-1]) + biases[-1]
         pred = tf.nn.softmax(output)
         responses[response] = sess.run(pred, feed_dict={x: predictors})
 
