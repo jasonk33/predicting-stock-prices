@@ -11,12 +11,12 @@ The models were constructed using Tensorflow, this code can be found in `train_m
 An individual stock price can be predicted from the saved models, this code can be found in `predict_stock.py`
 
 Predictions have two forms:
-    -Probability the stock will increase in price over a given time period
-    -Predicted stock price over a given time period in the future
+    - Probability the stock will increase in price over a given time period
+    - Predicted stock price over a given time period in the future
 There are four different time periods modelled:
-    -One day
-    -One week
-    -Two weeks
-    -One month
+    - One day
+    - One week
+    - Two weeks
+    - One month
 
 **This project is still in progress
