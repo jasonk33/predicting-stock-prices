@@ -2,6 +2,7 @@ import json
 import numpy as np
 from math import isnan
 from sklearn.model_selection import train_test_split
+import tensorflow as tf
 
 
 class MyEncoder(json.JSONEncoder):
@@ -105,3 +106,16 @@ def scale_individual_stock(variables_dict):
             mean = scaling_params[key]['mean']
             std = scaling_params[key]['std']
             variables_dict[key] = (value - mean) / std
+
+def create_network(x, nodes=[], num_classes=1):
+    nodes.insert(0, x.get_shape().as_list()[1])
+    nodes.append(num_classes)
+    weights = []
+    biases = []
+    layer = x
+    for layer_num, num_nodes in enumerate(nodes[:-1]):
+        weights.append(tf.Variable(tf.random_normal([num_nodes, nodes[layer_num+1]], 0, 0.1)))
+        biases.append(tf.Variable(tf.random_normal([nodes[layer_num+1]], 0, 0.1)))
+        if layer_num > 0:
+            layer = tf.nn.relu(tf.add(tf.matmul(layer, weights[layer_num-1]), biases[layer_num-1]))
+    return tf.matmul(layer, weights[-1]) + biases[-1]

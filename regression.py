@@ -5,6 +5,7 @@ import pandas as pd
 from math import isnan
 import os
 import tensorflow as tf
+from utils import create_network
 
 predictor_names = ['BIAS5', 'BIAS10', 'BIAS15', 'BIAS20', 'BIAS25', 'PSY5', 'PSY10', 'PSY15', 'PSY20', 'PSY25', 'ASY1',
                    'ASY2', 'ASY3', 'ASY4', 'ASY5', 'ASY6', 'ASY7', 'ASY8', 'ASY9', 'ASY10', 'ASY15', 'ASY20', 'ASY25']
@@ -89,24 +90,10 @@ xtrain, xtest, ytrain, ytest = train_test_split(predictors, variables_dict[curre
 print('Finished Splitting Data')
 
 # Parameters
-learning_rate = 0.001
-training_epochs = 10
+learning_rate = 0.01
+training_epochs = 50
 # Network Parameters
-hidden_layer_nodes = [100, 100, 100, 100]
-
-def create_network(x, nodes=[], num_classes=1):
-    nodes.insert(0, x.get_shape().as_list()[1])
-    nodes.append(num_classes)
-    weights = []
-    biases = []
-    layer = x
-    for layer_num, num_nodes in enumerate(nodes[:-1]):
-        weights.append(tf.Variable(tf.random_normal([num_nodes, nodes[layer_num+1]], 0, 0.1)))
-        biases.append(tf.Variable(tf.random_normal([nodes[layer_num+1]], 0, 0.1)))
-        if layer_num > 0:
-            layer = tf.nn.relu(tf.add(tf.matmul(layer, weights[layer_num-1]), biases[layer_num-1]))
-    return tf.matmul(layer, weights[-1]) + biases[-1]
-
+hidden_layer_nodes = [100, 100, 100]
 
 # tf Graph input
 x = tf.placeholder("float", [None, len(xtrain[0])])
@@ -114,7 +101,7 @@ y = tf.placeholder("float", [None])
 
 
 # Construct model
-pred = tf.transpose(create_network(x, hidden_layer_nodes))
+pred = tf.transpose(create_network(x, hidden_layer_nodes, num_classes=1))
 
 # Define loss and optimizer
 cost = tf.reduce_mean(tf.square(pred-y))
@@ -128,6 +115,7 @@ with tf.Session() as sess:
     for epoch in range(training_epochs):
         # Run optimization op (backprop) and cost op (to get loss value)
         sess.run([optimizer, cost, pred], feed_dict={x: xtrain, y: ytrain})
+        print('Completed Epoch {} of {}'.format(epoch + 1, training_epochs))
 
     print("Optimization Finished!")
 

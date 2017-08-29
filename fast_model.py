@@ -1,10 +1,11 @@
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import scale, minmax_scale, MaxAbsScaler
+from sklearn.preprocessing import scale
 import numpy as np
 import pandas as pd
 from math import isnan, isinf
 import os
 import tensorflow as tf
+from utils import create_network
 
 """
 Available Predictors: 
@@ -31,7 +32,7 @@ for name in all_predictors + all_response:
 print('Beginning Download')
 
 for folder_name in os.listdir('Raw_Stock_Data')[1:]:
-    for file_name in os.listdir('Raw_Stock_Data/' + folder_name)[1:25]:
+    for file_name in os.listdir('Raw_Stock_Data/' + folder_name)[1:250]:
         data = pd.read_csv('Raw_Stock_Data/' + folder_name + '/' + file_name)
         MA5 = data['Close'].shift().rolling(window=5).mean()
         """"
@@ -106,7 +107,7 @@ predictors = np.column_stack(([variables_dict[variable_name] for variable_name i
 
 print('Finished Munging Data')
 
-xtrain, xtest, ytrain, ytest = train_test_split(predictors, variables_dict[response])
+xtrain, xtest, ytrain, ytest = train_test_split(predictors, variables_dict[response], random_state=33)
 
 print('Finished Splitting Data')
 
@@ -116,35 +117,23 @@ ytrain_hot[np.arange(len(ytrain)), ytrain] = 1
 ytest_hot = np.zeros((len(ytest), 2))
 ytest_hot[np.arange(len(ytest)), ytest] = 1
 
-
-def create_network(x, nodes=[], num_classes=2):
-    nodes.insert(0, x.get_shape().as_list()[1])
-    nodes.append(num_classes)
-    weights = []
-    biases = []
-    layer = x
-    for layer_num, num_nodes in enumerate(nodes[:-1]):
-        weights.append(tf.Variable(tf.random_normal([num_nodes, nodes[layer_num+1]], 0, 0.1)))
-        biases.append(tf.Variable(tf.random_normal([nodes[layer_num+1]], 0, 0.1)))
-        if layer_num > 0:
-            layer = tf.nn.relu(tf.add(tf.matmul(layer, weights[layer_num-1]), biases[layer_num-1]))
-    return tf.matmul(layer, weights[-1]) + biases[-1]
-
 x = tf.placeholder(tf.float32, [None, len(predictor_names)], name='x')
 y = tf.placeholder(tf.float32, [None, 2])
 
-output_layer = create_network(x, [100, 100, 100])
+output_layer = create_network(x, [100, 100, 100, 100], num_classes=2)
 
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=output_layer))
-train_step = tf.train.GradientDescentOptimizer(.5).minimize(cross_entropy)
+train_step = tf.train.AdamOptimizer(.01).minimize(cross_entropy)
 sess = tf.InteractiveSession()
 tf.global_variables_initializer().run()
 
 
 print('Starting Model Training')
 
-for _ in range(100):
+num_epochs = 50
+for epoch in range(num_epochs):
     sess.run(train_step, feed_dict={x: xtrain, y: ytrain_hot})
+    print('Completed Epoch {} of {}'.format(epoch + 1, num_epochs))
 
 correct_prediction = tf.equal(tf.argmax(output_layer, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
@@ -152,3 +141,5 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 print("Model Accuracy: {}% -- Naive Model: {}%".format(sess.run(accuracy, feed_dict={x: xtest, y: ytest_hot})*100,
                                                        np.mean(ytest)*100))
+
+sess.close()
