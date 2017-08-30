@@ -3,20 +3,23 @@ import pandas as pd
 import os
 from utils import check_for_nan_elements, remove_nan_elements, write_to_json, scale_and_save
 
+r"""
+This script uses raw stock data to calculate various performance metrics and save that data to file.
+"""
+
+# Predictor names and response names
 predictor_names = ['BIAS5', 'BIAS10', 'BIAS15', 'BIAS20', 'BIAS25', 'PSY5', 'PSY10', 'PSY15', 'PSY20', 'PSY25', 'ASY1',
                    'ASY2', 'ASY3', 'ASY4', 'ASY5', 'ASY6', 'ASY7', 'ASY8', 'ASY9', 'ASY10', 'ASY15', 'ASY20', 'ASY25']
-
 response_names = ['daily', 'weekly', 'bi_weekly', 'monthly']
 
 variables_dict = {}
-
 for name in predictor_names:
     variables_dict[name] = []
 for name in response_names:
     variables_dict[name] = []
 
+# Iterate through each file with raw stock data, calculate metrics, and append to current results
 print('Beginning Download')
-
 for folder_name in os.listdir('Raw_Stock_Data')[1:]:
     for file_name in os.listdir('Raw_Stock_Data/' + folder_name)[1:]:
         data = pd.read_csv('Raw_Stock_Data/' + folder_name + '/' + file_name)
@@ -54,14 +57,10 @@ for folder_name in os.listdir('Raw_Stock_Data')[1:]:
         variables_dict['ASY15'].extend((SY.shift().rolling(window=15).mean())[25:-25])
         variables_dict['ASY20'].extend((SY.shift().rolling(window=20).mean())[25:-25])
         variables_dict['ASY25'].extend((SY.shift().rolling(window=25).mean())[25:-25])
-
-
 print('Finished Downloading Data')
 
+# Clean and save data
 idx_to_remove = check_for_nan_elements(variables_dict, predictor_names, verbose=True)
-
 remove_nan_elements(variables_dict, idx_to_remove, verbose=True)
-
 scale_and_save(variables_dict, predictor_names, verbose=True)
-
 write_to_json(variables_dict, verbose=True)

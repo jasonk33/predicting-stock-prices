@@ -6,6 +6,9 @@ import tensorflow as tf
 
 
 class MyEncoder(json.JSONEncoder):
+    r"""
+    Encoder class to convert object to proper format for json uploading
+    """
     def default(self, obj):
         if isinstance(obj, np.integer):
             return int(obj)
@@ -18,6 +21,23 @@ class MyEncoder(json.JSONEncoder):
 
 
 def check_for_nan_elements(variables_dict, variables_to_check, verbose=False):
+    r"""
+    A method for checking which trading days have metrics that contain NaN elements
+
+    Parameters
+    ----------
+    variables_dict : dict
+        Dictionary that contains the metric names and their values
+    variables_to_check : list[str]
+        List of the metrics to check for NaN elements
+    verbose : bool, optional
+        Print progress of method
+
+    Returns
+    -------
+    idx_to_remove : list[int]
+        The set of indices that contain NaN values
+    """
     idx_to_remove = []
     num_variables = len(variables_to_check)
     counter = 0
@@ -33,6 +53,18 @@ def check_for_nan_elements(variables_dict, variables_to_check, verbose=False):
 
 
 def remove_nan_elements(variables_dict, idx_to_remove, verbose=False):
+    r"""
+    A method for removing trading days with metrics containing NaN elements
+
+    Parameters
+    ----------
+    variables_dict : dict
+        Dictionary that contains the metric names and their values
+    idx_to_remove : list[int]
+        List of indices to be removed
+    verbose : bool, optional
+        Print progress of method
+    """
     num_variables = len(variables_dict)
     counter = 0
     for key, value in variables_dict.items():
@@ -44,6 +76,16 @@ def remove_nan_elements(variables_dict, idx_to_remove, verbose=False):
 
 
 def write_to_json(variables_dict, verbose=False):
+    r"""
+    A method for writing to json all metrics calculated
+
+    Parameters
+    ----------
+    variables_dict : dict
+        Dictionary that contains the metric names and their values
+    verbose : bool, optional
+        Print progress of method
+    """
     print('Beginning json dump')
     counter = 0
     num_variables = len(variables_dict)
@@ -56,6 +98,23 @@ def write_to_json(variables_dict, verbose=False):
 
 
 def load_from_json(predictors, response, verbose=False):
+    r"""
+    A method for loading all metrics from file
+
+    Parameters
+    ----------
+    predictors : list[str]
+        List of the metrics
+    response : list[str]
+        List of the response variables
+    verbose : bool, optional
+        Print progress of method
+
+    Returns
+    -------
+    variables_dict : dict
+        Dictionary that contains the metric names and their values
+    """
     variables_dict = {}
     num_variables = len(predictors) + 1
     counter = 0
@@ -70,18 +129,47 @@ def load_from_json(predictors, response, verbose=False):
 
 
 def create_model_data(variables_dict, predictors, response, model_type='Both'):
+    r"""
+    A method for preparing data into train and test sets to feed into a model
+
+    Parameters
+    ----------
+    variables_dict : dict
+        Dictionary that contains the metric names and their values
+    predictors : list[str]
+        List of the metrics
+    response : list[str]
+        List of the response variables
+    model_type : str, optional
+        Either 'Classification', 'Regression', or 'Both'
+
+    Returns
+    -------
+    xtrain : array
+        Predictor values for training
+    xtest : array
+        Predictor values for testing
+    ytrain : array
+        Response values for training regression
+    ytest : array
+        Response values for testing regression
+    ytrain_hot : array, optional
+        Response values for training classification
+    ytest_hot : array
+        Response values for testing classification
+    """
     predictors = np.column_stack(([variables_dict[variable_name] for variable_name in predictors]))
     print('Finished Munging Data')
     xtrain, xtest, ytrain, ytest = train_test_split(predictors, variables_dict[response], random_state=33)
     print('Finished Splitting Data')
     if model_type == 'Regression':
         return xtrain, xtest, ytrain, ytest
-    ytrain = np.where(np.array(ytrain) >= 0, 1, 0)
-    ytest = np.where(np.array(ytest) >= 0, 1, 0)
-    ytrain_hot = np.zeros((len(ytrain), 2))
-    ytrain_hot[np.arange(len(ytrain)), ytrain] = 1
-    ytest_hot = np.zeros((len(ytest), 2))
-    ytest_hot[np.arange(len(ytest)), ytest] = 1
+    ytrain_new = np.where(np.array(ytrain) >= 0, 1, 0)
+    ytest_new = np.where(np.array(ytest) >= 0, 1, 0)
+    ytrain_hot = np.zeros((len(ytrain_new), 2))
+    ytrain_hot[np.arange(len(ytrain_new)), ytrain_new] = 1
+    ytest_hot = np.zeros((len(ytest_new), 2))
+    ytest_hot[np.arange(len(ytest_new)), ytest_new] = 1
     if model_type == 'Classification':
         return xtrain, xtest, ytrain_hot, ytest_hot
     else:
@@ -89,6 +177,18 @@ def create_model_data(variables_dict, predictors, response, model_type='Both'):
 
 
 def scale_and_save(variables_dict, predictor_names, verbose=False):
+    r"""
+    A method for scaling predictor values and saving the scaling parameters to file
+
+    Parameters
+    ----------
+    variables_dict : dict
+        Dictionary that contains the metric names and their values
+    predictor_names : list[str]
+        List of the metrics
+    verbose : bool, optional
+        Print progress of method
+    """
     scaling_params = {}
     num_variables = len(predictor_names)
     counter = 0
@@ -106,6 +206,14 @@ def scale_and_save(variables_dict, predictor_names, verbose=False):
 
 
 def scale_individual_stock(variables_dict):
+    r"""
+    A method for scaling an individual stock's predictor values using scaling parameters saved locally
+
+    Parameters
+    ----------
+    variables_dict : dict
+        Dictionary that contains the metric names and their values
+    """
     with open('scaling_params.json', 'r') as fd:
         scaling_params = json.loads(fd.read())
     for key, value in variables_dict.items():
@@ -115,6 +223,21 @@ def scale_individual_stock(variables_dict):
             variables_dict[key] = (value - mean) / std
 
 def create_network(x, nodes=[], num_classes=1):
+    r"""
+    A method for building a neural network with a variable number of hidden layers
+
+    Parameters
+    ----------
+    nodes : list[int], optional
+        How many nodes each of hidden layer will contain
+    num_classes : int, optional
+        Number of ouput nodes (1 for regression, more than 1 for classification)
+
+    Returns
+    -------
+    output_layer : TensorFlow object
+        The output layer of the constructed neural network
+    """
     nodes.insert(0, x.get_shape().as_list()[1])
     nodes.append(num_classes)
     weights = []

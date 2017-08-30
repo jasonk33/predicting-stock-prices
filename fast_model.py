@@ -7,14 +7,11 @@ import os
 import tensorflow as tf
 from utils import create_network
 
+r"""
+This script is used to train neural networks to predict stock price direction for parameter optimization. Can be used to
+try out different metrics on different response variables, as well as try different network configurations.
 """
-Available Predictors: 
-    BIAS: 5, 10, 15, 20, 25
-    PSY: 5, 10, 15, 20, 25
-    ASY: 1:10, 15, 20, 25
-Available Responses:
-    daily, weekly, bi_weekly, monthly
-"""
+
 all_predictors = ['BIAS5', 'BIAS10', 'BIAS15', 'BIAS20', 'BIAS25', 'PSY5', 'PSY10', 'PSY15', 'PSY20', 'PSY25', 'ASY1',
                    'ASY2', 'ASY3', 'ASY4', 'ASY5', 'ASY6', 'ASY7', 'ASY8', 'ASY9', 'ASY10', 'ASY15', 'ASY20', 'ASY25']
 

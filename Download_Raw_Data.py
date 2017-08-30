@@ -1,6 +1,10 @@
 from pandas_datareader import data
 from finsymbols import symbols
 
+r"""
+This script is used for downloading raw data of various stocks over the last ~15 years.
+"""
+
 all_stocks = symbols.get_nyse_symbols() + symbols.get_nasdaq_symbols()
 
 for stock in all_stocks:
