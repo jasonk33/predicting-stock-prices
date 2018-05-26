@@ -22,4 +22,3 @@ There are four different time periods modelled:
     - Two weeks
     - One month
 ```
-**This project is still in progress
